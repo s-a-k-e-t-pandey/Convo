@@ -7,7 +7,58 @@ const userRoutes = express();
 const prisma = new PrismaClient();
 userRoutes.use(express.json());
 
-userRoutes.post('/login', async(req, res)=>{
+
+userRoutes.post('/signup', async(req,res)=>{
+    try{
+        const {success} = signinInput.safeParse(req.body);
+        if(!success){
+            res.status(411);
+            return res.json({
+                msg: "Invalid user Input"
+            })
+        }
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                email: req.body.email
+            }
+        })
+        if(existingUser){
+            res.status(409)
+            return res.json({
+                msg: "User Already exist"
+            })
+        }
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        const user = await prisma.user.create({
+            data: {
+                username: req.body.username,
+                email: req.body.email,
+                password: hashedPassword
+            }
+        })
+
+        req.session.user = {
+            username: user.username,
+            email: user.email,
+        }
+
+        res.status(200)
+        return res.json({
+            signup: true,
+            user: {
+                email: user.email,
+                username: user.email
+            }
+        })
+    }catch(e) {
+        console.log(e)
+        return res.status(400).json({
+            msg: "Error while Signing up"
+        })
+    }
+})
+
+userRoutes.post('/signin', async(req, res)=>{
     try{
         const {success} =  signinInput.safeParse(req.body);
         if(!success){
@@ -16,23 +67,51 @@ userRoutes.post('/login', async(req, res)=>{
                 msg: "Invalid Inputs"
             })
         }
-        const existingUser = await prisma.user.findFirst({
+        const user = await prisma.user.findFirst({
             where: {
-                email: req.body.email
+                OR: [
+                    {username: req.body.username},
+                    {email: req.body.email}
+                ]
             }
         })
-        if(!existingUser){
+        if(!user){
             res.status(404)
             return res.json({
                 msg: "Invalid User Access"
             })
         }
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);
-        const user = await prisma.user.create({
-            data: {
-                email: req.body.email,
-                password: hashedPassword
+        const passwordValidation = await bcrypt.compare(req.body.password, user.password)
+        if(!passwordValidation){
+            res.status(403)
+            return res.json({msg: "Incorrect Password"})
+        }
+
+        req.session.user = {
+            username: user.username,
+            email: user.email,
+        }
+
+        return res.status(200).json({
+            signin: true,
+            user: {
+                email: user.email,
+                username: user.username
             }
+        })  
+    }catch(e){
+        res.status(400).json({
+            msg: "Error while signing up"
         })
     }
 })
+
+
+userRoutes.get("/signout", (req,res)=>{
+    res.clearCookie('connect.sid',{path:'/'})
+    return res.json({
+        signout: true
+    })
+})
+
+export default userRoutes;
