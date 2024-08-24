@@ -14,16 +14,17 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(uuid())
-  username         String    @unique
-  email            String    @unique
+  id               String     @id @default(uuid())
+  username         String     @unique
+  email            String     @unique
   password         String
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  messagesSent     Message[] @relation("SentMessages") // Messages sent by the user
-  messagesReceived Message[] @relation("ReceivedMessages") // Messages received by the user
-  callsSent        Call[]    @relation("Caller")// Video calls initiated by the user
-  callsReceived    Call[]    @relation("Receiver")
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  messagesSent     Message[]  @relation("SentMessages") // Messages sent by the user
+  messagesReceived Message[]  @relation("ReceivedMessages") // Messages received by the user
+  callsSent        Call[]     @relation("Caller") // Video calls initiated by the user
+  callsReceived    Call[]     @relation("Receiver")
+  roomUser         RoomUser[]
 }
 
 model Message {
@@ -34,6 +35,8 @@ model Message {
   receiverId String
   sender     User     @relation("SentMessages", fields: [senderId], references: [id])
   receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  roomId     String
+  room       Room   @relation(fields: [roomId], references: [id])
 }
 
 model Call {
@@ -45,4 +48,22 @@ model Call {
   receiver   User      @relation("Receiver", fields: [receiverId], references: [id])
   startedAt  DateTime?
   endedAt    DateTime?
+}
+
+model Room {
+  id        String     @id @default(uuid())
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  messages  Message[]
+  users     RoomUser[]
+}
+
+model RoomUser {
+  id       String   @id @default(uuid())
+  roomId   String
+  userId   String
+  room     Room     @relation(fields: [roomId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  joinedAt DateTime @default(now())
 }

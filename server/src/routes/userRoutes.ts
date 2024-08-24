@@ -100,6 +100,7 @@ userRoutes.post('/signin', async(req, res)=>{
             }
         })  
     }catch(e){
+        console.log(e)
         res.status(400).json({
             msg: "Error while signing up"
         })
@@ -107,11 +108,17 @@ userRoutes.post('/signin', async(req, res)=>{
 })
 
 
-userRoutes.get("/signout", (req,res)=>{
-    res.clearCookie('connect.sid',{path:'/'})
-    return res.json({
-        signout: true
-    })
+userRoutes.get("/signout", async(req,res)=>{
+    try{
+        res.clearCookie('connect.sid',{path:'/'})
+        console.log('hey im here')
+        return res.json({
+            signout: true
+        })
+    }catch(e){
+        res.status(400)
+        console.log('error while signout',e)
+    }
 })
 
 export default userRoutes;

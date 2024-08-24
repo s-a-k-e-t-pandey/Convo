@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.ts",
+    "start": "node dist/index.js",
     "build": "npx tsc -b",
-    "dev": "npm run start & npm run build"
+    "dev": "npm run build & npm run start"
   },
   "keywords": [],
   "author": "",
@@ -18,10 +18,12 @@
     "@types/express-session": "^1.18.0",
     "@types/ws": "^8.5.12",
     "bcrypt": "^5.1.1",
+    "connect-pg-simple": "^9.0.1",
     "connect-redis": "^7.1.1",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
+    "pg": "^8.12.0",
     "prisma": "^5.18.0",
     "redis": "^4.7.0",
     "ws": "^8.18.0",
