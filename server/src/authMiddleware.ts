@@ -3,11 +3,7 @@
 export const isAuthenticated = (req: any, res: any, next: any)=>{
     try{
         if (req.session.user) {
-            res.json({ 
-                isAuthenticated: true, 
-                user: req.session.user 
-            })
-            next()
+            return next()
         } else {
             res.status(401).json({ 
                 isAuthenticated: false ,

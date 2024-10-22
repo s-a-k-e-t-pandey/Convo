@@ -10,13 +10,18 @@ roomRoutes.use(express.json());
 //Create new room
 roomRoutes.post('/', isAuthenticated, async(req, res)=>{
     try{
+        console.log("room initiated")
         const {roomName} = req.body;
+        console.log("room initiated")
         const room = await prisma.room.create({
             data: {
                 name: roomName
             }
         })
-        return res.status(201).json(room);
+        console.log("room created")
+        return res.status(201).json({
+            msg: room
+        });
     }catch(e){
         console.error("Error while creating room", e);
         return res.status(500).json({ msg: 'Internal Server Error' });
@@ -25,9 +30,9 @@ roomRoutes.post('/', isAuthenticated, async(req, res)=>{
 
 
 //Get Room details
-roomRoutes.get('/rooms/:roomId', async(req, res)=>{
+roomRoutes.get('/roomId', async(req, res)=>{
     try{
-        const {roomId} = req.params;
+        const {roomId} = req.body;
         const room = await prisma.room.findUnique({
             where: {
                 id: roomId
@@ -50,10 +55,15 @@ roomRoutes.get('/rooms/:roomId', async(req, res)=>{
 });
 
 //Join a room
-roomRoutes.post('/rooms/:roomId/join', async (req, res)=>{
+roomRoutes.post('/roomId/join', async (req, res)=>{
     try{
-        const { roomId } = req.params;
+        const { roomId } = req.body;
         const {userId} = req.body;
+
+        if (!userId || !roomId) {
+            return res.status(400).json({ msg: "User ID and Room ID are required" });
+        }
+
         const room = await prisma.room.findUnique({
             where: {
                 id: roomId
@@ -71,6 +81,8 @@ roomRoutes.post('/rooms/:roomId/join', async (req, res)=>{
             return res.status(403).json({msg: "Room is alloted"})
         }
 
+
+
         await prisma.roomUser.create({
             data: {
                 roomId,
@@ -86,9 +98,9 @@ roomRoutes.post('/rooms/:roomId/join', async (req, res)=>{
 
 
 //Leave Room
-roomRoutes.post('/rooms/:roomId/leave', async(req, res)=>{
+roomRoutes.post('/roomId/leave', async(req, res)=>{
     try{
-        const {roomId} = req.params;
+        const {roomId} = req.body;
         const {userId} = req.body;
 
         await prisma.roomUser.deleteMany({

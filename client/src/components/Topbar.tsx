@@ -3,18 +3,27 @@ import { Link } from "react-router-dom";
 
 export default function Topbar() {
 
-    return <div className="bg-yellow-600 p-4 text-3xl font-extrabold">
-        <div className="flex justify-between">
-            <div className="flex row">
-                Convo <div className="text-4xl"><SiThunderbird /></div>
+    return <div className="bg-cyan-400	 p-4 text-3xl font-extrabold border-solid border-2 border-slate-400">
+        <div className="flex justify-between text-[#0d1117]">
+            <div className="flex row text-[#0d1117] bg-cyan-400">
+                <Link to={"/"}>
+                <button className="inline-flex h-10 items-center justify-center rounded-full bg-cyan-400 px-8 text-3xl font-medium text-[#0d1117] shadow transition-colors  border-red-400 border-2">
+                Convo <div className="text-4xl text-[#0d1117]"><SiThunderbird /></div>
+                </button>
+                </Link>
+                
             </div>
             <div className="flex row">
-            <button className="text-white bg-black-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-l-full text-sm font-semibold px-5 py-2.5 text-center me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
-                <Link to={"/signin"}>Login</Link>
-            </button>
-            <button className="text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-r-full text-sm font-semibold px-5 py-2.5 text-center me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
-                <Link to={"/signup"}>Signup</Link>
-            </button>
+                <Link to={"/signin"}>
+                    <button className="inline-flex h-10 items-center justify-center rounded-l-full bg-cyan-400 px-8 text-lg font-medium text-[#0d1117] shadow transition-colors hover:bg-cyan-500/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border-l-red-400 border-2">
+                        Login
+                    </button>
+                </Link>
+                <Link to={"/signup"}>
+                    <button className="inline-flex h-10 items-center justify-center rounded-r-full bg-cyan-400 px-8 text-lg font-medium text-[#0d1117] shadow transition-colors hover:bg-cyan-500/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border-r-red-400 border-2">
+                        Signup
+                    </button>
+                </Link>
             </div>
         </div>
     </div>

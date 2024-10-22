@@ -91,12 +91,12 @@ userRoutes.post('/signin', async(req, res)=>{
             username: user.username,
             email: user.email,
         }
-
         return res.status(200).json({
             signin: true,
             user: {
                 email: user.email,
-                username: user.username
+                username: user.username,
+                id: user.id
             }
         })  
     }catch(e){

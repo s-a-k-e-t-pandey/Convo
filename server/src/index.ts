@@ -1,5 +1,5 @@
 import express from "express"
-import { Server } from "ws"
+import WebSocket from "ws"
 import http from "http";
 import cors from "cors";
 import session from "express-session"
@@ -7,11 +7,13 @@ import userRoutes from "./routes/userRoutes";
 import roomRoutes from "./routes/roomRoutes";
 import prisma from "./prismaSingleton";
 
+
+
 const app = express();
 app.use(express.json());
 app.use(cors({
     origin: ["http://localhost:5173"],
-    methods:['POST', 'GET', 'PUT', 'DELETE'],
+    methods: ['POST', 'GET', 'PUT', 'DELETE'],
     credentials: true
 }))
 
@@ -32,62 +34,94 @@ const sessionMiddleware = session({
 
 app.use(sessionMiddleware);
 app.use("/api/v1/user", userRoutes);
-app.use('/api/v1/room', roomRoutes);
+app.use("/api/v1/room", roomRoutes);
 
 
-// app.get('/', (req, res) => {
-//     if (req.session.views) {
-//       req.session.views++;
-//       res.send(`<p>Views: ${req.session.views}</p>`);
+// app.get('/api/v1/session', (req, res) => {
+//     if (req.session.user) {
+//         res.json({ 
+//             isAuthenticated: true, 
+//             user: req.session.user 
+//         })
 //     } else {
-//       req.session.views = 1;
-//       res.send('Welcome! Refresh to track your views.');
+//         res.status(401).json({ 
+//             isAuthenticated: false 
+//         })
 //     }
-// });
+// })
 
-app.get('/api/v1/session', (req, res) => {
-    if (req.session.user) {
-        res.json({ 
-            isAuthenticated: true, 
-            user: req.session.user 
-        })
-    } else {
-        res.status(401).json({ 
-            isAuthenticated: false 
-        })
-    }
-})
+
+type Data = {
+    userId: string;
+    roomId: string;
+}
+
+let senderSocket: null | WebSocket = null;
+let receiverSocket: null | WebSocket = null;
 
 const server = http.createServer(app);
-const wss = new Server({ server });
+const wss = new WebSocket.Server({ server });
 
-const users = new Map(); //store connected users with their room inforeq
+const users = new Map(); //store connected users with their room info
 
-wss.on('connection', (ws, req)=>{
+wss.on('connection', (ws: WebSocket) => {
     ws.on('error', console.error);
-    
-    ws.on('message', async(message)=>{
-        const parsedMessage = JSON.parse(message.toString());
 
-        switch(parsedMessage.type){
-            case 'join_room':
-                handleJoinRoom(ws, parsedMessage);
-                break;  
+    ws.on('message', async (message) => {
+        const { type, data } = JSON.parse(message.toString());
+
+        switch (type) {
             
-            case 'send_message': 
-                handleSendMessage(ws, parsedMessage);
+            case 'sender':
+                console.log("Sender added");
+                senderSocket = ws;
+                break;
+
+            case 'receiver':
+                console.log("Receiver added");
+                receiverSocket = ws;
+                break;
+
+            case 'createOffer':
+                if (ws !== senderSocket) return;
+                console.log("Sending offer");
+                receiverSocket?.send(JSON.stringify({ type: 'createOffer', sdp: data.sdp }));
+                break;
+
+            case 'createAnswer':
+                if (ws !== receiverSocket) return;
+                console.log("Sending answer");
+                senderSocket?.send(JSON.stringify({ type: 'createAnswer', sdp: data.sdp }));
+                break;
+
+            case 'iceCandidate':
+                console.log("Sending ICE candidate");
+                if (ws === senderSocket) {
+                    receiverSocket?.send(JSON.stringify({ type: 'iceCandidate', candidate: data.candidate }));
+                } else if (ws === receiverSocket) {
+                    senderSocket?.send(JSON.stringify({ type: 'iceCandidate', candidate: data.candidate }));
+                }
+                break;
+
+            case 'join_room':
+                handleJoinRoom(ws, data);
+                ws.send("lobby")
+                break;
+
+            case 'send_message':
+                handleSendMessage(ws, data);
                 break;
 
             case 'start_call':
-                handleStartCall(ws, parsedMessage);
+                handleStartCall(ws, data);
                 break;
 
             case 'webrtc_signal':
-                handleWebRTCSignal(ws, parsedMessage);
+                handleWebRTCSignal(ws, data);
                 break;
 
             case 'leave_room':
-                handleLeaveRoom(ws, parsedMessage);
+                handleLeaveRoom(ws, data);
                 break;
 
             default:
@@ -95,14 +129,14 @@ wss.on('connection', (ws, req)=>{
         }
     });
 
-    ws.on('close', ()=>{
+    ws.on('close', () => {
         handleDisconnect(ws);
     });
 });
 
 //have to fix the types
-const handleJoinRoom = async(ws: any, message: any) => {
-    const {roomId, userId} = message;
+const handleJoinRoom = async (ws: WebSocket, data: Data) => {
+    const { roomId, userId } = data;
 
     const roomUserCount = await prisma.roomUser.count({
         where: {
@@ -110,16 +144,16 @@ const handleJoinRoom = async(ws: any, message: any) => {
         }
     })
 
-    if(roomUserCount >= 2){
-        ws.send(JSON.stringify({type: 'error', message: 'Room is full'}));
+    if (roomUserCount >= 2) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Room is full' }));
         return;
     }
-    users.set(userId, {ws, roomId});
-    ws.send(JSON.stringify({type: 'joined_room', roomId}));
+    users.set(userId, { ws, roomId });
+    ws.send(JSON.stringify({ type: 'joined_room', roomId }));
 }
 
-const handleLeaveRoom = async(ws: any, message: any)=>{
-    const {userId, roomId} = message;
+const handleLeaveRoom = async (ws: any, message: any) => {
+    const { userId, roomId } = message;
 
     //remove user from room
     users.delete(userId);
@@ -132,19 +166,19 @@ const handleLeaveRoom = async(ws: any, message: any)=>{
         }
     })
 
-    ws.send(JSON.stringify({type: 'left_room', roomId}));
+    ws.send(JSON.stringify({ type: 'left_room', roomId }));
 }
 
-const handleSendMessage = async(ws: any, message: any)=>{
-    const {roomId, content, senderId, receiverId} = message;
+const handleSendMessage = async (ws: any, message: any) => {
+    const { roomId, content, senderId, receiverId } = message;
     await prisma.message.create({
         data: {
             content,
             sender: {
-                connect: {id: senderId}
+                connect: { id: senderId }
             },
             receiver: {
-                connect: {id: receiverId}
+                connect: { id: receiverId }
             },
             room: {
                 connect: { id: roomId }
@@ -153,43 +187,42 @@ const handleSendMessage = async(ws: any, message: any)=>{
     });
 
     //Broadcast the message to all users in the room
-    users.forEach((user, userId)=>{
-        if(user.roomId === roomId){
-            user.ws.send(JSON.stringify({type: 'receive_message', senderId, content}))
+    users.forEach((user, userId) => {
+        if (user.roomId === roomId) {
+            user.ws.send(JSON.stringify({ type: 'receive_message', senderId, content }))
         }
     });
 }
 
 
-const handleStartCall = (ws: any, message: any)=>{
-    const {roomId, userId} = message;
-    
+const handleStartCall = (ws: any, message: any) => {
+    const { roomId, userId } = message;
+
     //find other users in same room
     const peers = Array.from(users.values()).filter(user => user.roomId === roomId && user.ws !== ws)
 
-    peers.forEach(peer =>{
-        peer.send(JSON.stringify({type: "call_initiated", from: userId}));
+    peers.forEach(peer => {
+        peer.send(JSON.stringify({ type: "call_initiated", from: userId }));
     })
 
-    ws.send(JSON.stringify({type: 'call_started', to: peers.map(p=>p.userId)}));
+    ws.send(JSON.stringify({ type: 'call_started', to: peers.map(p => p.userId) }));
 }
 
 
-const handleWebRTCSignal = (ws: any, message: any)=>{
-    const {signal, to, from} = message;
+const handleWebRTCSignal = (ws: any, message: any) => {
+    const { signal, to, from } = message;
 
     const targetUser = users.get(to);
-    if(targetUser){
-        targetUser.ws.send({type: 'webrtc_signal', signal, from})
+    if (targetUser) {
+        targetUser.ws.send({ type: 'webrtc_signal', signal, from })
     }
 };
 
 
-
-const handleDisconnect = (ws: any)=>{
+const handleDisconnect = (ws: any) => {
     //find and remove disconnected users from room
-    for(const [userId, user] of users.entries()){
-        if(user.ws === ws){
+    for (const [userId, user] of users.entries()) {
+        if (user.ws === ws) {
             users.delete(userId)
             break;
         }
@@ -197,6 +230,6 @@ const handleDisconnect = (ws: any)=>{
 }
 
 
-server.listen(PORT, ()=>{
-    console.log(`Server is running on port ${PORT}`)   
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
 })

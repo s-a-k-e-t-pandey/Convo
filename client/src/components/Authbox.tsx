@@ -19,7 +19,7 @@ export const Authbox = ({type} : {type: 'signin' | "signup"})=>{
             const response  = await axios.post(`${BACKEND_URL}/api/v1/user/${type === 'signin' ? 'signin' : 'signup'}`, postInputs);
             const success = await response.data;
             if(success){
-                navigate("/room");
+                navigate("/dashboard");
             }
         }catch(e){
             alert("error while fetching Credentials");
@@ -28,9 +28,9 @@ export const Authbox = ({type} : {type: 'signin' | "signup"})=>{
 
     return <div>
         <LandingPage children={
-            <div className="h-screen flex justify-center">
-            <div className="flex-col p-10 m-24">
-                <div className="bg-slate-200 flex-col align-middle p-10 rounded-xl">
+            <div className="h-screen flex justify-center ">
+            <div className="flex-col p-10 m-16 ">
+                <div className="flex-col align-middle p-10 rounded-xl bg-slate-400">
                     <div className="text-3xl font-extrabold flex justify-center">
                         {type === "signin" ? "Login" : "Create an Account"}
                     </div>
@@ -40,7 +40,7 @@ export const Authbox = ({type} : {type: 'signin' | "signup"})=>{
                             {type === "signin" ? "Sign up": "Sign in"}
                         </Link>
                     </div>
-                    <div className="pt-4">
+                    <div className="pt-2">
                         <LabelledInput label="Username" placeholder="saketpandey" onChange={(e) => {
                             setPostInputs({
                                 ...postInputs,
