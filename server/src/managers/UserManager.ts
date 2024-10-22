@@ -1,6 +1,8 @@
 import WebSocket from "ws";
 import { RoomManager } from "./RoomManager";
 
+let GLOBAL__ID = 1;
+
 export interface User {
   ws: WebSocket;
   name: string;
@@ -14,17 +16,15 @@ export class UserManager {
   private users: User[];
   private queue: string[];
   private roomManager: RoomManager;
-  private idCounter: number;
 
   constructor() {
     this.users = [];
     this.queue = [];
     this.roomManager = new RoomManager();
-    this.idCounter = 0;
   }
 
-  addUser(name: string, ws: WebSocket) {
-    const id = `ws-${this.idCounter++}`;
+  addUser(name: string, ws: WebSocket, clientId: string) {
+    const id = clientId;
     this.users.push({
       name,
       ws,
