@@ -1,15 +1,12 @@
 import WebSocket from "ws";
 import { RoomManager } from "./RoomManager";
 
-let GLOBAL__ID = 1;
 
 export interface User {
   ws: WebSocket;
   name: string;
   id: string;
 }
-
-const decoder = new TextDecoder("utf-8");
 
 
 export class UserManager {
@@ -31,7 +28,8 @@ export class UserManager {
       id,
     });
     this.queue.push(id);
-    ws.send(JSON.stringify({ messageType: "lobby" }));
+    console.log("Add User Queue length is " + this.queue.length);
+    ws.send(JSON.stringify({ type: "lobby" }));
     this.clearQueue();
     this.initHandlers(ws, id);
   }
@@ -52,7 +50,7 @@ export class UserManager {
 
     const id1 = this.queue.pop();
     const id2 = this.queue.pop();
-    console.log("id is " + id1 + " " + id2);
+    console.log("id1 is " + id1 + " id2 is " + id2);
     const user1 = this.users.find((x) => x.id === id1);
     const user2 = this.users.find((x) => x.id === id2);
 
@@ -66,9 +64,14 @@ export class UserManager {
   }
 
   initHandlers(ws: WebSocket, id: string) {
+    ws.on("open", () => {
+      console.log("Connected to WebSocket server");
+    });
+
     ws.on("message", async (event) => {
-      const data = JSON.parse(JSON.stringify(event));
-      switch (data.messageType) {
+      const data = JSON.parse(event.toString());
+      console.log("Received message string", data.type);
+      switch (data.type) {
         case "offer":
           this.roomManager.onOffer(data.roomId, data.sdp, id);
           break;
@@ -79,13 +82,10 @@ export class UserManager {
           this.roomManager.onIceCandidates(data.roomId, id, data.candidate, data.messageType);
           break;
         default:
-          console.log("Unknown message messageType");
+          console.log("Unknown message messageType from backend");
       }
     });
 
-    ws.on("open", () => {
-      console.log("Connected to WebSocket server");
-    });
 
     ws.on("close", () => {
       console.log("Disconnected from WebSocket server");

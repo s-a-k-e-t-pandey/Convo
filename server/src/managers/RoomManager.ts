@@ -38,8 +38,9 @@ export class RoomManager {
       return;
     }
     const receivingUser = room.user1.id === senderSocketid ? room.user2 : room.user1;
+    console.log("OnOFfer");
     receivingUser?.ws.send(JSON.stringify({
-      messageType: "offer",
+      type: "offer",
       sdp,
       roomId
     }))
@@ -51,24 +52,24 @@ export class RoomManager {
       return;
     }
     const receivingUser = room.user1.id === senderSocketid ? room.user2 : room.user1;
-
+    console.log("OnAnswer");
     receivingUser?.ws.send(JSON.stringify({
-      messageType: "answer",
+      type: "answer",
       sdp,
       roomId
     }));
   }
 
-  onIceCandidates(roomId: string, senderSocketid: string, candidate: any, type: "sender" | "receiver") {
+  onIceCandidates(roomId: string, senderSocketid: string, candidate: any, role: "sender" | "receiver") {
     const room = this.rooms.get(roomId);
     if (!room) {
       return;
     }
     const receivingUser = room.user1.id === senderSocketid ? room.user2 : room.user1;
     receivingUser.ws.send(JSON.stringify({
-      messageType: "add-ice-candidate",
+      type: "add-ice-candidate",
       candidate,
-      type
+      role
     }));
   }
 

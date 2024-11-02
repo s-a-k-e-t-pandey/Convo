@@ -18,8 +18,6 @@ app.use(cors({
     credentials: true
 }))
 
-const PORT = process.env.PORT || 8001; // Change to a different port number
-
 
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'default-secret',
@@ -40,7 +38,7 @@ app.use("/api/v1/room", roomRoutes);
 
 const server = http.createServer(app);
 
-const wss = new WebSocket.Server({ server, path: '/ws' });
+const wss = new WebSocket.Server({ server, path: "/ws" });
 
 const userManager = new UserManager();
 
@@ -59,6 +57,6 @@ wss.on('connection', (ws) => {
     });
   });
 
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`)
+server.listen(3000, () => {
+    console.log(`Server is running on port 3000`)
 })
