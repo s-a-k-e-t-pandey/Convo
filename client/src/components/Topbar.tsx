@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 
 export default function Topbar() {
 
-    return <div className="bg-cyan-400	 p-4 text-3xl font-extrabold border-solid border-2 border-slate-400">
+    return <div className="bg-gradient-to-b via-cyan-400 via-teal-400 from-blue-900 to-blue-800 z-10 p-4 text-3xl font-extrabold border-solid border-2 border-slate-400 rounded-2xl">
         <div className="flex justify-between text-[#0d1117]">
-            <div className="flex row text-[#0d1117] bg-cyan-400">
+            <div className="flex row text-[#0d1117] ">
                 <Link to={"/"}>
                 <button className="inline-flex h-10 items-center justify-center rounded-full bg-cyan-400 px-8 text-3xl font-medium text-[#0d1117] shadow transition-colors  border-red-400 border-2">
                 Convo <div className="text-4xl text-[#0d1117]"><SiThunderbird /></div>

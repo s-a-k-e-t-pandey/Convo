@@ -44,8 +44,7 @@ export const VideoChat = ({
           setLobby(false);
           const pc = createPeerConnection();
           setSendingPc(pc);
-
-          // Add local media tracks to the peer connection
+          
           if (localVideoTrack) {
             pc.addTrack(localVideoTrack);
           }

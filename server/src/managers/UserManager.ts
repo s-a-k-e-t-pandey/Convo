@@ -27,6 +27,7 @@ export class UserManager {
       ws,
       id,
     });
+    console.log(id);
     this.queue.push(id);
     console.log("Add User Queue length is " + this.queue.length);
     ws.send(JSON.stringify({ type: "lobby" }));

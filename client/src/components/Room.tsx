@@ -45,97 +45,6 @@ export const Room = ({
             ws.current.onmessage = async (event: any) => {
                 const data = JSON.parse(event.data);
                 handleWebSocketMessage(data);
-                // switch (data.messageType) {
-                //     case "send-offer":
-                //         console.log("sending offer");
-                //         setLobby(false);
-                //         const pc = new RTCPeerConnection();
-                //         sendingPc.current = pc;
-                        
-                //         if (localVideoTrack) {
-                //             pc.addTrack(localVideoTrack);
-                //         }
-                //         if (localAudioTrack) {
-                //             pc.addTrack(localAudioTrack);
-                //         }
-
-                //         pc.onicecandidate = async (e) => {
-                //             if (e.candidate && ws.current) {
-                //                 ws.current.send(JSON.stringify({
-                //                     messageType: "add-ice-candidate",
-                //                     candidate: e.candidate,
-                //                     type: "sender",
-                //                     roomId: data.roomId
-                //                 }));
-                //             }
-                //         };
-                        
-                //         pc.onnegotiationneeded = async () => {
-                //             const sdp = await pc.createOffer();
-                //             pc.setLocalDescription(sdp);
-                //             ws.current?.send(JSON.stringify({
-                //                 messageType: "offer",
-                //                 sdp,
-                //                 roomId: data.roomId
-                //             }));
-                //         };
-                //         break;
-
-            //         case "offer":
-            //             console.log("received offer");
-            //             setLobby(false);
-            //             const receivePc = new RTCPeerConnection();
-            //             await receivePc.setRemoteDescription(data.remoteSdp);
-            //             const answerSdp = await receivePc.createAnswer();
-            //             receivePc.setLocalDescription(answerSdp);
-                        
-            //             const stream = new MediaStream();
-            //             if (remoteVideoRef.current) {
-            //                 remoteVideoRef.current.srcObject = stream;
-            //             }
-
-            //             receivingPc.current = receivePc;
-                        
-            //             receivePc.ontrack = (e) => {
-            //                 stream.addTrack(e.track);
-            //             };
-
-            //             receivePc.onicecandidate = async (e) => {
-            //                 if (e.candidate && ws.current) {
-            //                     ws.current.send(JSON.stringify({
-            //                         messageType: "add-ice-candidate",
-            //                         candidate: e.candidate,
-            //                         type: "receiver",
-            //                         roomId: data.roomId
-            //                     }));
-            //                 }
-            //             };
-
-            //             ws.current?.send(JSON.stringify({
-            //                 messageType: "answer",
-            //                 roomId: data.roomId,
-            //                 sdp: answerSdp
-            //             }));
-            //             break;
-
-            //             case "answer":
-            //             setLobby(false);
-            //             sendingPc.current?.setRemoteDescription(data.remoteSdp);
-            //             console.log("loop closed");
-            //             break;
-
-            //         case "add-ice-candidate":
-            //             console.log("add ice candidate from remote");
-            //             if (data.type === "sender") {
-            //                 receivingPc.current?.addIceCandidate(data.candidate);
-            //             } else {
-            //                 sendingPc.current?.addIceCandidate(data.candidate);
-            //             }
-            //             break;
-
-            //             default:
-            //             console.log("Unknown message type");
-            //     }
             };
 
         }else{
@@ -153,72 +62,63 @@ export const Room = ({
     }, []);
 
 
-    const handleWebSocketMessage = async (data: any) => {
-        console.log("reached on Cases" ,data);
-        switch (data.type) {
-            case "send-offer":
-                console.log("sending offer");
-                setLobby(false);
-                const pc = new RTCPeerConnection();
-                sendingPc.current = pc;
+const handleWebSocketMessage = async (data: any) => {
+    console.log("Received WebSocket message", data);
 
-                if (localVideoTrack) {
-                    pc.addTrack(localVideoTrack);
+    switch (data.type) {
+        case "send-offer":
+            console.log("Sending offer");
+            setLobby(false);
+
+            if (!sendingPc.current || sendingPc.current.signalingState === 'closed') {
+                sendingPc.current = new RTCPeerConnection();
+            }
+
+            const pc = sendingPc.current;
+
+            if (localVideoTrack) {
+                pc.addTrack(localVideoTrack);
+            }
+            if (localAudioTrack) {
+                pc.addTrack(localAudioTrack);
+            }
+
+            pc.onicecandidate = (e) => {
+                if (e.candidate) {
+                    iceCandidatesQueue.push(e.candidate);
+                } else if (ws.current && iceCandidatesQueue.length > 0) {
+                    ws.current.send(JSON.stringify({
+                        type: "add-ice-candidates",
+                        candidates: iceCandidatesQueue,
+                        role: "sender",
+                        roomId: data.roomId,
+                    }));
+                    candidateQueue = [];
                 }
-                if (localAudioTrack) {
-                    pc.addTrack(localAudioTrack);
+            };
+
+            pc.onnegotiationneeded = async () => {
+                try {
+                    const sdp = await pc.createOffer();
+                    await pc.setLocalDescription(sdp);
+                    ws.current?.send(JSON.stringify({
+                        type: "offer",
+                        sdp,
+                        roomId: data.roomId
+                    }));
+                } catch (error) {
+                    console.error("Error creating or sending offer:", error);
                 }
+            };
+            break;
 
-                pc.onicecandidate = (e) => {
-                    if (e.candidate) {
-                        candidateQueue.push(e.candidate);
-                    } else if (ws.current && candidateQueue.length > 0) {
-                        ws.current.send(JSON.stringify({
-                            type: "ice-candidates",
-                            candidates: candidateQueue,
-                            role: "sender",
-                            roomId: data.roomId,
-                        }));
-                        candidateQueue = [];
-                    }
-                };
+        case "offer":
+            console.log("Received offer:", data.sdp);
+            setLobby(false);
 
-
-                pc.onnegotiationneeded = async () => {
-                    try {
-                        const sdp = await pc.createOffer();
-                        await pc.setLocalDescription(sdp);
-                        ws.current?.send(JSON.stringify({
-                            type: "offer",
-                            sdp,
-                            roomId: data.roomId
-                        }));
-                    } catch (error) {
-                        console.error("Error creating or sending offer:", error);
-                    }
-                };
-                break;
-                
-            case "offer":
-                console.log("received offer", data.sdp);
-                setLobby(false);
-                const receivePc = new RTCPeerConnection();
-                await receivePc.setRemoteDescription(data.sdp);
-                const answerSdp = await receivePc.createAnswer();
-                receivePc.setLocalDescription(answerSdp);
-
-                const stream = new MediaStream();
-                if (remoteVideoRef.current) {
-                    remoteVideoRef.current.srcObject = stream;
-                }
-
-                receivingPc.current = receivePc;
-
-                receivePc.ontrack = (e) => {
-                    stream.addTrack(e.track);
-                };
-
-                receivePc.onicecandidate = async (e) => {
+            if (!receivingPc.current || receivingPc.current.signalingState === 'closed') {
+                receivingPc.current = new RTCPeerConnection();
+                receivingPc.current.onicecandidate = (e) => {
                     if (e.candidate && ws.current) {
                         ws.current.send(JSON.stringify({
                             type: "add-ice-candidate",
@@ -229,56 +129,70 @@ export const Room = ({
                     }
                 };
 
+                const stream = new MediaStream();
+                if (remoteVideoRef.current) {
+                    remoteVideoRef.current.srcObject = stream;
+                }
+
+                receivingPc.current.ontrack = (e) => {
+                    stream.addTrack(e.track);
+                };
+            }
+
+            const receivepc = receivingPc.current;
+
+            // Check signaling state before setting remote description
+            if (receivepc.signalingState !== "have-remote-offer" && receivepc.signalingState !== "have-local-offer") {
+                await receivepc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+                const answer = await receivepc.createAnswer();
+                await receivepc.setLocalDescription(answer);
+
                 ws.current?.send(JSON.stringify({
                     type: "answer",
-                    roomId: data.roomId,
-                    sdp: answerSdp
+                    sdp: answer,
+                    roomId: data.roomId
                 }));
-                break;
+            } else {
+                console.warn("PeerConnection is in an unexpected state:", receivepc.signalingState);
+            }
+            break;
 
-                
-                // "answer" case
-                case "answer":
-                    // const iceCandidatesQueue: RTCIceCandidate[] = [];
-                    setLobby(false);
-                    console.log("data.remoteSdp:", data.sdp);
-                    if (sendingPc.current) {
-                        await sendingPc.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
-                        console.log("Remote description set on sender");
-                        // Drain the queue of any ICE candidates that arrived early
-                        while (iceCandidatesQueue.length > 0) {
-                            const candidate = iceCandidatesQueue.shift();
-                            if (candidate) {
-                                await sendingPc.current.addIceCandidate(candidate);
-                            }
-                        }
-                    }
-                    break;
-                
-                // "add-ice-candidate" case
-                case "add-ice-candidate":
-                    const candidate = new RTCIceCandidate(data.candidate);
-                    if (data.type === "sender") {
-                        console.log("Adding ICE candidate for sender");
-                        if (receivingPc.current?.remoteDescription) {
-                            await receivingPc.current.addIceCandidate(candidate);
-                        } else {
-                            iceCandidatesQueue.push(candidate);
-                        }
-                    } else {
-                        console.log("Adding ICE candidate for receiver");
-                        if (sendingPc.current?.remoteDescription) {
-                            await sendingPc.current.addIceCandidate(candidate);
-                        } else {
-                            iceCandidatesQueue.push(candidate);
-                        }
-                    }
-                    break;
-                
-            default:
-                console.log("Unknown message type from frontend");
-        }
-    };
+        case "answer":
+            console.log("Received answer:", data.sdp);
+
+            if (sendingPc.current && sendingPc.current.signalingState === "have-local-offer") {
+                await sendingPc.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
+                // Add queued ICE candidates if they exist
+                while (iceCandidatesQueue.length > 0) {
+                    const candidate = iceCandidatesQueue.shift();
+                    await sendingPc.current.addIceCandidate(candidate);
+                }
+            } else {
+                console.warn("Cannot set answer in current state:", sendingPc.current?.signalingState);
+            }
+            break;
+
+        case "add-ice-candidate":
+            const candidate = new RTCIceCandidate(data.candidate);
+            const targetPc = data.type === "sender" ? receivingPc.current : sendingPc.current;
+
+            if (targetPc) {
+                if (targetPc.remoteDescription) {
+                    await targetPc.addIceCandidate(candidate);
+                } else {
+                    iceCandidatesQueue.push(candidate);
+                }
+            } else {
+                console.error("No valid PeerConnection to add ICE candidate.");
+            }
+            break;
+
+        default:
+            console.warn("Unknown message type received:", data.type);
+    }
+};
+
 
 
 
@@ -313,10 +227,10 @@ export const Room = ({
       <div>
         <div className="flex flex-row flex-1 relative group w-full">
           <div className="flex flex-col flex-1 border-2 border-black rounded-lg p-1 ">
-            <video autoPlay width={400} height={400} ref={localVideoRef as React.LegacyRef<HTMLVideoElement>}/>
+            <video autoPlay width={800} height={800} ref={localVideoRef as React.LegacyRef<HTMLVideoElement>}/>
           </div>
           <div className="flex flex-col flex-1 border-2 border-black rounded-lg p-1 ">
-            <video autoPlay width={400} height={400} ref={remoteVideoRef as React.LegacyRef<HTMLVideoElement>}/>
+            <video autoPlay width={800} height={800} ref={remoteVideoRef as React.LegacyRef<HTMLVideoElement>}/>
           </div>
         </div>
       </div>

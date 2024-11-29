@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import {Room} from "../components/Room";
-import { VideoChat } from "./newRoom";
+import { IoPersonAdd } from "react-icons/io5";
+
 
 export const Landing = () => {
     const [name, setName] = useState("");
@@ -49,30 +50,51 @@ export const Landing = () => {
             
     return <div>
             <div className="flex flex-row flex-1 relative group w-full">
-                <div className="flex flex-col justify-center border-2 border-black rounded-lg p-1 ">
-                <video className="w-500 h-500" autoPlay ref={videoRef}></video>
-                <button className="absolute bottom-4 left-4 px-4 py-2 bg-blue-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={() => {
-                        setJoined(true);
-                }}>Join</button>
+                <div className="flex flex-row flex-1 relative group w-full">
+                  <div className="flex flex-col flex-1 border-2 border-black rounded-lg p-1 ">
+                    <video autoPlay width={800} height={800} ref={videoRef as React.LegacyRef<HTMLVideoElement>}/>
+                        <button className="absolute bottom-4 left-4 px-4 py-2 bg-blue-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={() => {
+                                setJoined(true);
+                        }}>Join</button>
                 </div>
-                {/* <div className="flex flex-col flex-1 border-2 border-black rounded-lg p-1 ">
-                <video className="w-500 h-500" autoPlay ref={videoRef}></video>
-                </div> */}
+                <div className="flex flex-col flex-1 border-2 border-black rounded-lg p-1 bg-slate-200">
+                  <IoPersonAdd  className="flex justify-center text-blue-600 text-8xl mt-64 ml-80 font-bold w-fit px-6"/>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col flex-1">
-                <div className="flex flex-row flex-1">
-                <input type="text" onChange={(e) => {
-                        setName(e.target.value);
-                    }}>
-                </input>
+            <div className="flex flex-row flex-1">
+                <div className="flex flex-col w-full border-2 border-black rounded-lg p-1 m-1">
+                  <div className="border-b-4 m-1">
+                    <div>
+                    <button className="text-white bg-green-600 hover:bg-greeen-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm font-semibold px-5 py-2.5 text-center cursor-wait">
+                        Start
+                    </button>
+                    <button className="text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-lg mt-1 mx-1 text-sm font-semibold px-5 py-2.5 text-center cursor-wait">
+                        Stop
+                    </button>
+                    <button className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-lg mt-1 mx-1 text-sm font-semibold px-5 py-2.5 text-center cursor-wait">
+                        Next
+                    </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col flex-1 border-2 border-black rounded-lg p-1 m-1">
-                    Messages
+                <div className="flex flex-col w-full border-2 border-black rounded-lg p-1 m-1">
+                <input
+                    type="text"
+                    placeholder="Type your message..."
+                    className="flex-grow px-4 py-2 text-gray-700 w-full bg-white border rounded-l-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                </div>
+                <div className="flex flex-col border-2 rounded-lg p-1 m-1 ">
+                <button
+                    className="relative inline-flex items-center px-5 py-5 font-medium text-white bg-indigo-600 rounded-r-lg shadow-2xl group focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  >
+                    <span className="relative">Send</span>
+                  </button>
                 </div>
             </div>
         </div>
     }
 
-    // return <VideoChat name={name} localVideoTrack={localVideoTrack} localAudioTrack={localAudioTrack} />
         return   <Room name={name} localVideoTrack={localVideoTrack} localAudioTrack={localAudioTrack} /> 
 }

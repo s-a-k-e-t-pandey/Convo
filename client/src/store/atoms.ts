@@ -1,4 +1,4 @@
-import { atom } from "recoil"
+import { atom, selector } from "recoil"
 
 export const messageState = atom({
     key: "messageState",
@@ -15,4 +15,4 @@ export const roomMessageSelector = selector({
     get: async ({get})=>{
         const roomId = get(currentRoomState)
     }
-})
+})    

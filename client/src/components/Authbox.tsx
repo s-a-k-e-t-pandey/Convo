@@ -27,46 +27,46 @@ export const Authbox = ({type} : {type: 'signin' | "signup"})=>{
     }
 
     return <div>
-        <LandingPage children={
-            <div className="h-screen flex justify-center ">
-            <div className="flex-col p-10 m-16 ">
-                <div className="flex-col align-middle p-10 rounded-xl bg-slate-400">
-                    <div className="text-3xl font-extrabold flex justify-center">
-                        {type === "signin" ? "Login" : "Create an Account"}
-                    </div>
-                    <div className="flex justify-center py-2">
-                        {type === "signin" ? "Don't have an account?" : "Already have an account?" }
-                        <Link className="pl-2 underline text-blue-500" to={type === "signin" ? "/signup" : "/signin"}>
-                            {type === "signin" ? "Sign up": "Sign in"}
-                        </Link>
-                    </div>
-                    <div className="pt-2">
-                        <LabelledInput label="Username" placeholder="saketpandey" onChange={(e) => {
-                            setPostInputs({
-                                ...postInputs,
-                                username: e.target.value
-                            })
-                        }} />
-                        <LabelledInput label="Email" placeholder="saketpandey@gmail.com" onChange={(e) => {
-                            setPostInputs({
-                                ...postInputs,
-                                email: e.target.value
-                            })
-                        }} />
-                        <LabelledInput label="Password" type={"password"} placeholder="123456" onChange={(e) => {
-                            setPostInputs({
-                                ...postInputs,
-                                password: e.target.value
-                            })
-                        }} />
-                        <button onClick={SendRequest} type="button" className="mt-8 w-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">{type === "signup" ? "Sign up" : "Sign in"}</button>
-                    </div>
+    <LandingPage children={
+        <div className="my-20 flex item-center justify-center">
+        <div className="flex-col px-4 mx-4 w-full max-w-sm ease-in-out hover:scale-105">
+            <div className="flex-col  align-middle p-8 rounded-xl bg-gradient-to-br from-blue-900 via-teal-400 via-cyan-200 to-blue-900 opacity-70">
+                <div className="text-3xl font-extrabold flex justify-center">
+                    {type === "signin" ? "Login" : "Create an Account"}
+                </div>
+                <div className="flex justify-center py-2">
+                    {type === "signin" ? "Don't have an account?" : "Already have an account?" }
+                    <Link className="pl-2 underline text-blue-500" to={type === "signin" ? "/signup" : "/signin"}>
+                        {type === "signin" ? "Sign up": "Sign in"}
+                    </Link>
+                </div>
+                <div className="pt-2">
+                    <LabelledInput label="Username" type='text' placeholder="saket1234" onChange={(e) => {
+                        setPostInputs({
+                            ...postInputs,
+                            username: e.target.value
+                        })
+                    }} />
+                    <LabelledInput label="Email" type ="email" placeholder="saketpandey1234@example.com" onChange={(e) => {
+                        setPostInputs({
+                            ...postInputs,
+                            email: e.target.value
+                        })
+                    }} />
+                    <LabelledInput label="Password" type={"password"} placeholder="password123" onChange={(e) => {
+                        setPostInputs({
+                            ...postInputs,
+                            password: e.target.value
+                        })
+                    }} />
+                    <button onClick={SendRequest} type="button" className="mt-8 w-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">{type === "signup" ? "Sign up" : "Sign in"}</button>
                 </div>
             </div>
         </div>
-        }>
-        </LandingPage>
     </div>
+    }>
+    </LandingPage>
+</div>
 }
 
 interface LabelledInputType {
